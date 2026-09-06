@@ -1,0 +1,147 @@
+ Установка Zabbix Server на ALT Server 11.0 (VMware, MariaDB, Apache)
+
+
+ 1. Подготовка системы
+
+apt-get update && apt-get dist-upgrade
+hostnamectl set-hostname zabbix-server
+
+2. Установка MariaDB и создание базы данных
+
+apt-get install mariadb-server zabbix-server-mysql fping
+systemctl enable --now mariadb
+mysql_secure_installation
+
+ Настройка mysql_secure_installation по пунктам:
+
+1. Enter current password for root — Enter (пароля ещё нет)
+2. Switch to unix_socket authentication — n (нет), чтобы логиниться по паролю
+3. Change the root password — Y (да)
+4. Remove anonymous users — Y (да)
+5. Disallow root login remotely — Y (да)
+6. Remove test database and access to it — Y (да)
+7. Reload privilege tables now — Y (да)
+
+ Создание базы и пользователя
+
+mysql -uroot -p
+
+create database zabbix character set utf8mb4 collate utf8mb4_bin;
+create user 'zabbix'@'localhost' identified by 'ТвойПароль';
+grant all privileges on zabbix.* to 'zabbix'@'localhost';
+set global log_bin_trust_function_creators = 1;
+quit;
+
+Импорт схемы БД
+
+ls /usr/share/doc/ | grep zabbix-common-database-mysql
+
+Далее по порядку (подставив реальную версию из вывода выше):
+
+mysql -uzabbix -p zabbix < /usr/share/doc/zabbix-common-database-mysql-*/schema.sql
+mysql -uzabbix -p zabbix < /usr/share/doc/zabbix-common-database-mysql-*/images.sql
+mysql -uzabbix -p zabbix < /usr/share/doc/zabbix-common-database-mysql-*/data.sql
+
+После импорта опцию можно отключить:
+
+mysql -uroot -p -e "set global log_bin_trust_function_creators = 0;"
+
+ 3. Настройка и запуск Zabbix-сервера
+
+В файле /etc/zabbix/zabbix_server.conf найти и заполнить:
+
+DBName=zabbix
+DBUser=zabbix
+DBPassword=ТвойПарольОтБазы
+
+(если DBName/DBUser написаны, то добавить только DBPassword.)
+DBHost можно оставить закомментированным — тогда подключение к MariaDB пойдёт через локальный unix-сокет (быстрее, чем через TCP/IP).
+
+Запуск службы:
+
+systemctl enable --now zabbix_mysql
+
+ 4. Установка Apache2
+
+apt-get install apache2 apache2-mod_php8.3
+systemctl enable --now httpd2
+
+5. Установка PHP с модулем MySQL
+
+apt-get install php8.3 php8.3-mbstring php8.3-sockets php8.3-gd php8.3-xmlreader php8.3-mysqlnd-mysqli php8.3-ldap php8.3-openssl
+
+В файле /etc/php/8.3/apache2-mod_php/php.ini:
+
+memory_limit = 256M
+post_max_size = 32M
+max_execution_time = 600
+max_input_time = 600
+date.timezone = Asia/Yekaterinburg
+
+systemctl restart httpd2
+
+ 6. Установка веб-интерфейса (frontend)
+
+apt-get install zabbix-phpfrontend-apache2 zabbix-phpfrontend-php8.3
+ln -s /etc/httpd2/conf/addon.d/A.zabbix.conf /etc/httpd2/conf/extra-enabled/
+systemctl restart httpd2
+chown apache2:apache2 /var/www/webapps/zabbix/ui/conf
+
+Если при заходе на страницу выдаёт 403 Forbidden — добавить в /etc/httpd2/conf/sites-available/default.conf внутри секции <Directory>:
+
+Require all granted
+
+и перезапустить Apache.
+
+7. Завершение установки через браузер
+
+Открыть:
+
+http://<айпи>/zabbix
+
+Пройти мастер установки: проверка требований → параметры подключения к БД (zabbix/zabbix/пароль) → имя сервера → подтверждение конфигурации.
+
+Вход по умолчанию:
+- Логин: Admin
+- Пароль: zabbix
+
+Сразу сменить пароль через Administration → Users → Admin.(если хочешь)
+
+Важно: если страница "вечно грузится" или выдаёт ошибку через прокси (например, squid) — проверь VPN/прокси на компьютере, с которого заходишь. Локальные адреса (192.168.x.x) должны идти в обход VPN/прокси (split tunneling или исключение в настройках прокси).
+
+ 8. Установка Zabbix-агента (на этом же сервере)
+
+apt-get install zabbix-agent
+
+В /etc/zabbix/zabbix_agentd.conf по умолчанию уже стоит (для локального агента менять не нужно):
+
+Server=127.0.0.1
+ServerActive=127.0.0.1
+
+Если агент ставится на другую машину — указать IP Zabbix-сервера:
+
+Server=<ваш айпи>
+ServerActive=<ваш айпи>
+Hostname=имя-узла
+
+Запуск службы (имя юнита в ALT — через подчёркивание, а не дефис):
+
+systemctl enable --now zabbix_agentd
+
+Проверка:
+
+systemctl status zabbix_agentd
+ss -tlnp | grep 10050
+
+ 9. Добавление хоста в веб-интерфейсе
+
+1. Сбор данных → Узлы сети (Hosts) → Создать узел сети
+2. Имя узла сети - что угодно
+3. Шаблоны - Linux by Zabbix agent
+4. Группы узлов сети - Linux servers
+5. Интерфейсы - добавить - тип: Agent - ip: 127.0.0.1 - порт 10050 - переключатель на IP.
+
+Через 1–2 минуты на дашборде появятся метрики CPU/RAM/дисков с узла.
+
+
+
