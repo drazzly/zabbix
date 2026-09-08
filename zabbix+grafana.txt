@@ -201,29 +201,6 @@ Administration → Plugins and data → Plugins → найти Zabbix → наж
 4-  Логин/пароль от Zabbix (Admin/твой пароль)
 5 - Save & Test
 
-6. Создание дашборда с графиками (CPU, Memory, Storage)
-
-Создать новый дашборд:
-Dashboards → New → New Dashboard → Add visualization → выбрать источник данных Zabbix
-
-График CPU Utilization:
-- Query: Group → Host → Item = "CPU utilization" (или "CPU load")
-- Visualization: Time series
-- Title: CPU Utilization
-- Unit: Percent (0-100), если метрика в процентах
-
-График Memory:
-- Query: тот же Host → Item = "Available memory" или "Memory utilization"
-- Visualization: Time series
-- Title: Memory Usage
-- Unit: Data (IEC) → bytes/GB, либо Percent (0-100), в зависимости от метрики
-
-График Storage (диск):
-- Query: Host → Item = "Free disk space" или "Used disk space" (для конкретного раздела, например "/")
-- Visualization: Time series (или Gauge / Bar gauge — для текущего значения)
-- Title: Disk Storage
-- Unit: Data (IEC) или Data (Metric) → GB
-
 Все панели можно перетаскивать и менять размер прямо на дашборде.
 Сверху справа — Save dashboard, дать название, например "Zabbix Server Monitoring".
 
