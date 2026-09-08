@@ -142,3 +142,89 @@ ss -tlnp | grep 10050
 5. Интерфейсы - добавить - тип: Agent - ip: 127.0.0.1 - порт 10050 - переключатель на IP.
 
 Через 1–2 минуты на дашборде появятся метрики CPU/RAM/дисков с узла.
+
+Установка Grafana
+
+apt-get install grafana
+systemctl daemon-reload
+systemctl enable --now grafana-server
+systemctl status grafana-server
+
+ЧАСТЬ 2. GRAFANA
+
+
+1. Установка Grafana
+
+Grafana есть в официальном репозитории ALT p11, скачивать вручную не нужно:
+
+apt-get update
+apt-get install grafana
+
+
+2. Запуск и автозагрузка
+
+systemctl daemon-reload
+systemctl enable --now grafana-server
+systemctl status grafana-server
+
+
+3. Вход в веб-интерфейс
+
+Открыть: http://ваш айпи:3000
+
+Логин по умолчанию: admin / admin
+При первом входе Grafana попросит сразу сменить пароль.
+
+
+4. Установка плагина Zabbix
+
+grafana-cli plugins install alexanderzobnin-zabbix-app
+systemctl restart grafana-server
+
+Проверить, что плагин установлен:
+
+grafana-cli plugins ls
+
+В списке должен быть alexanderzobnin-zabbix-app.
+
+ВАЖНО: после установки плагин нужно ВКЛЮЧИТЬ вручную через интерфейс:
+Administration → Plugins and data → Plugins → найти Zabbix → нажать кнопку "Enable"
+
+Без этого шага плагин не появится в списке при добавлении источника данных, даже если он "установлен".
+
+
+5. Подключение Zabbix как источника данных
+
+1 - Connections - Add new connection - Search: zabbix - Enable/install - Data sources - Search: zabbix.
+2 - Выбрать Zabbix
+3 - URL: http://localhost/zabbix/api_jsonrpc.php
+4-  Логин/пароль от Zabbix (Admin/твой пароль)
+5 - Save & Test
+
+6. Создание дашборда с графиками (CPU, Memory, Storage)
+
+Создать новый дашборд:
+Dashboards → New → New Dashboard → Add visualization → выбрать источник данных Zabbix
+
+График CPU Utilization:
+- Query: Group → Host → Item = "CPU utilization" (или "CPU load")
+- Visualization: Time series
+- Title: CPU Utilization
+- Unit: Percent (0-100), если метрика в процентах
+
+График Memory:
+- Query: тот же Host → Item = "Available memory" или "Memory utilization"
+- Visualization: Time series
+- Title: Memory Usage
+- Unit: Data (IEC) → bytes/GB, либо Percent (0-100), в зависимости от метрики
+
+График Storage (диск):
+- Query: Host → Item = "Free disk space" или "Used disk space" (для конкретного раздела, например "/")
+- Visualization: Time series (или Gauge / Bar gauge — для текущего значения)
+- Title: Disk Storage
+- Unit: Data (IEC) или Data (Metric) → GB
+
+Все панели можно перетаскивать и менять размер прямо на дашборде.
+Сверху справа — Save dashboard, дать название, например "Zabbix Server Monitoring".
+
+Совет: сверху справа можно выбрать период отображения (Last 6 hours, Last 24 hours) и включить автообновление (например, каждые 30s или 1m).
