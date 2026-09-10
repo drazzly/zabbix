@@ -139,20 +139,9 @@ ss -tlnp | grep 10050
 4. Группы узлов сети - Linux servers
 5. Интерфейсы - добавить - тип: Agent - ip: ________ - порт 10050 - переключатель на IP.
 
-
-Установка Grafana
-
-apt-get install grafana
-systemctl daemon-reload
-systemctl enable --now grafana-server
-systemctl status grafana-server
-
 ЧАСТЬ 2. GRAFANA
 
-
 1. Установка Grafana
-
-Grafana есть в официальном репозитории ALT p11, скачивать вручную не нужно:
 
 apt-get update
 apt-get install grafana
@@ -171,6 +160,7 @@ systemctl status grafana-server
 
 Логин по умолчанию: admin / admin
 При первом входе Grafana попросит сразу сменить пароль.
+Administration -> Users and access -> Users -> admin -> Password -> edit -> пароль -> save
 
 
 4. Установка плагина Zabbix
@@ -192,7 +182,7 @@ Administration → Plugins and data → Plugins → найти Zabbix → наж
 
 5. Подключение Zabbix как источника данных
 
-1 - Connections - Add new connection - Search: zabbix - Enable/install - Data sources - Search: zabbix.
+1 - Connections - Add new connection - Search: zabbix - Enable/install - Connections - Data sources - Search: zabbix.
 2 - Выбрать Zabbix
 3 - URL: http://localhost/zabbix/api_jsonrpc.php
 4-  Логин/пароль от Zabbix (Admin/твой пароль)
