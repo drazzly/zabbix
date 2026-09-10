@@ -187,8 +187,3 @@ Administration → Plugins and data → Plugins → найти Zabbix → наж
 3 - URL: http://localhost/zabbix/api_jsonrpc.php
 4-  Логин/пароль от Zabbix (Admin/твой пароль)
 5 - Save & Test
-
-Все панели можно перетаскивать и менять размер прямо на дашборде.
-Сверху справа — Save dashboard, дать название, например "Zabbix Server Monitoring".
-
-Совет: сверху справа можно выбрать период отображения (Last 6 hours, Last 24 hours) и включить автообновление (например, каждые 30s или 1m).
