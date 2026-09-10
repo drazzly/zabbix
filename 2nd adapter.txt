@@ -1,0 +1,39 @@
+(VMware)
+
+1. Edit -> Virtual Network Adapter -> Add network... -> выбрать vmnet2 к примеру -> Host-only, Use local DHCP -> Subnet IP: который нужен, Subnet Mask: так же -> OK.
+
+(запустить ВМ)
+
+1. Ввести "ip a" для проверки работы адаптера. Должно быть что то вроде "3: ens36" или похожее.
+
+2. Настройка адаптера через конфиги: 
+
+  cd /etc/net/ifaces
+ ls
+ mkdir ens*твои числа*
+ cd ens***
+ cp /etc/net/ifaces/ens33/* /etc/net/ifaces/ens***/
+(После копирования изменяnm все что надо в ens***)
+ 
+(надо чтоб dhcp выдал айпи)
+ nano ipv4address -> ничего
+ nano ipv4route -> default via *тот который нужно*
+ nano resolv.conf -> nameserver *тот который нужно*
+                     search 8.8.8.8
+nano options -> BOOTPROTO=dhcp
+                SYSTEMD_BOOTPROTO=dhcp
+
+ПОСЛЕ ПРОПИСАТЬ: systemctl restart network
+
+(после выданного айпи)
+  cd /etc/net/ifaces/ens***
+  nano ipv4address -> выданный ip/24
+  nano options -> BOOTPROTO=static
+                  SYSTEMD_BOOTPROTO=static
+
+ПОСЛЕ ПРОПИСАТЬ: systemctl restart network
+
+
+  
+
+
