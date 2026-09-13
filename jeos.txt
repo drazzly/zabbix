@@ -1,0 +1,83 @@
+1. Сетевая конфигурация
+
+mkdir -p /etc/net/ifaces/сюда вписывать то, что выдало при ip a(2:ens***)
+
+cd /etc/net/ifaces/ens***
+
+cat <<EOF > options  (далее просто вводить одну настройку за другой)
+TYPE=eth
+BOOTPROTO=dhcp
+CONFIG_WIRELESS=no
+SYSTEMD_BOOTPROTO=dhcp
+CONFIG_IPV4=yes
+DISABLED=no
+NM_CONTROLLED=no
+SYSTEMD_CONTROLLED=no
+EOF
+(НЕ ЗАБЫТЬ ПОТОМ static ВМЕСТО dhcp)
+
+systemctl restart network
+
+потом можно прописать apt-get update/dist-upgrade и качать все что надо
+
+apt-get install -y sudo nano openssh-server
+
+Добавить пользователя:
+
+useradd -m -s /bin/bash user
+
+passwd user - задать пароль
+
+usermod -aG wheel user 
+
+потом nano /etc/sudoers настроить
+
+прописать systemctl enable --now sshd и подключить по ssh(так удобнее)
+
+cd /etc/net/ifaces/ens***
+
+nano ipv4address - вписать ip(который выдал dhcp)/24
+
+nano /etc/net/ifaces/ens36/ipv4route - default via шлюз
+
+nano /etc/net/ifaces/ens36/resolv.conf - nameserver шлюз
+                                         search 8.8.8.8
+
+systemctl restart network
+
+теперь можно настраивать другие ens:
+
+mkdir -p /etc/net/ifaces/ens***
+nano /etc/net/ifaces/ens***/options - TYPE=eth
+                                      BOOTPROTO=dhcp
+                                      CONFIG_WIRELESS=no
+                                      SYSTEMD_BOOTPROTO=dhcp
+                                      CONFIG_IPV4=yes
+                                      DISABLED=no
+                                      NM_CONTROLLED=no
+                                      SYSTEMD_CONTROLLED=no
+(НЕ ЗАБЫТЬ ПОТОМ static ВМЕСТО dhcp)
+systemctl restart network
+
+cp /etc/net/ifaces/ens***/* /etc/net/ifaces/ens***/ - одной командой скопировать все файлы
+и все аналогично настроить. (в ipv4route вписать тот шлюз который нужен)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
